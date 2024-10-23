@@ -1,7 +1,7 @@
 """
 Auto Digital Signature for NTUH
 By Hsu-Li Huang (huang.hsuli@gmail.com)
-Version: 1.0.1
+Version: 1.0.2
 Released: 2024-10-23
 Python Version: 3.9.13
 Dependencies:
@@ -10,6 +10,7 @@ Dependencies:
     - Requests
     - OpenCV
 Changelog:
+    - v1.0.2 (2024-10-23): Update automatically sending the log file after finishing.
     - v1.0.1 (2024-10-23): Update logging settings.
     - v1.0.0 (2024-10-22): Initial release with automated login, CAPTCHA solving, digital signature functionality.
 """
@@ -41,7 +42,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 # Local Application Imports
-# (if any custom modules in the future)
+from email_utils import send_email_with_attachment
 
 # ======================
 # Configuration Settings
@@ -387,3 +388,15 @@ driver.quit()
 # Log a finish message
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 logging.info(f"AutoDigiSign Finished: {timestamp}")
+
+# Send the log file after finishing
+try:
+    subject = "AutoDigiSign Finished Successfully"
+    body = "Please find the attached log file for the recent run of AutoDigiSign."
+    log_filepath = os.path.join('logs', log_filename)  # Make sure this matches your log file path
+    send_email_with_attachment(subject, body, attachment_path=log_filepath)
+except Exception as e:
+    logging.error("Failed to send completion email with log file. Error: %s", e)
+    
+# Automatically close the command prompt window
+#os._exit(0)
