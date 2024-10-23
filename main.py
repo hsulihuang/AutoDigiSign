@@ -1,8 +1,8 @@
 """
 Auto Digital Signature for NTUH
 By Hsu-Li Huang (huang.hsuli@gmail.com)
-Version: 1.0.0
-Released: 2024-10-22
+Version: 1.0.1
+Released: 2024-10-23
 Python Version: 3.9.13
 Dependencies:
     - Selenium
@@ -10,6 +10,7 @@ Dependencies:
     - Requests
     - OpenCV
 Changelog:
+    - v1.0.1 (2024-10-23): Update logging settings.
     - v1.0.0 (2024-10-22): Initial release with automated login, CAPTCHA solving, digital signature functionality.
 """
 
@@ -54,9 +55,9 @@ os.chdir('/Users/hsulihuang/programming/AutoDigiSign' if os.name == 'posix' else
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g., 20241021_103015
 
 # Set up logging to log to a file with a timestamp in the name, and also print to console
-log_filename = f"autodigisign_{timestamp}.log"
+log_filename = f"AutoDigiSign_{timestamp}.log"
 logging.basicConfig(
-    level=logging.INFO,  # Set the minimum logging level; (Messages of Severity: DEBUG < INFO < WARNING < ERROR < CRITICAL)
+    level=logging.DEBUG,  # Set the minimum logging level; (Messages of Severity: DEBUG < INFO < WARNING < ERROR < CRITICAL)
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(os.path.join('logs', log_filename), mode='w'),  # Write logs to a file; ('w' to overwrite each time, 'a' to append)
@@ -269,19 +270,19 @@ def digital_signature(EMPLOYEE, PINCODE):
     
     # Initially set the flag to True
     flag = True
-
+    
     # Check initial state based on the patterns
     if re.search(pattern_1, message_text):
-        #print('AutoDigiSign message: OK, 查無待簽章電子病歷資料')
+        #logging.info('AutoDigiSign message: OK, 查無待簽章電子病歷資料')
         flag = False  # No further action needed
     elif re.search(pattern_2, message_text):
-        #print('AutoDigiSign message: OK, 簽章完成')
+        #logging.info('AutoDigiSign message: OK, 簽章完成')
         flag = False  # No further action needed
     elif re.search(pattern_3, message_text):
-        #print('AutoDigiSign message: Error, ServiSign主程式-未安裝完成')
+        #logging.error('AutoDigiSign message: Error, ServiSign主程式-未安裝完成')
         flag = False  # Stop since ServiSign is not installed
     elif re.search(pattern_4, message_text):
-        #print('AutoDigiSign message: Error, 初始化密碼模組失敗')
+        #logging.error('AutoDigiSign message: Error, 初始化密碼模組失敗')
         flag = False  # Stop since ServiSign is not installed
     elif re.search(pattern_5, message_text):
         logging.info('AutoDigiSign message: Auto-signing, 批次電子簽章作業中')
@@ -315,7 +316,7 @@ def digital_signature(EMPLOYEE, PINCODE):
     driver.switch_to.window(main_window)
 
     # Confirm you are back in the main window
-    #print("Back to the main window:", driver.title)
+    #logging.info("Back to the main window:", driver.title)
 
 # ================
 # Main Application
@@ -335,7 +336,7 @@ while retry_count < MAX_RETRIES:
     try:
         # Extract CAPTCHA text
         captcha_text = get_captcha_text(driver)
-        print(f"Attempt #{retry_count + 1}: CAPTCHA text extracted: {captcha_text}")
+        logging.info(f"Attempt #{retry_count + 1}: CAPTCHA text extracted: {captcha_text}")
 
         # Wait 
         time.sleep(1)  # Adjust as needed
@@ -349,15 +350,15 @@ while retry_count < MAX_RETRIES:
         # Check if login was successful by looking for a specific element (i.e. the logout buttom)
         try:
             wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="TopButtonLogOutDIV"]')))
-            print("Login successful!")
+            logging.info("Login successful!")
             break  # Exit loop if login is successful
         except:
             # If the success element isn't found, assume login failed
-            print("Login failed. Retrying...")
+            logging.info("Login failed. Retrying...")
             retry_count += 1
 
     except Exception as e:
-        print(f"Error during login attempt #{retry_count + 1}: {e}")
+        logging.info(f"Error during login attempt #{retry_count + 1}: {e}")
         retry_count += 1
 
 if retry_count == MAX_RETRIES:
