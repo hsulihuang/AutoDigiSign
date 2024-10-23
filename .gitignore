@@ -4,6 +4,7 @@ logs/
 storehouse/
 WebDriver/
 credentials.ini
+email_config.ini
 employee_ids.txt
 
 # Byte-compiled / optimized / DLL files
