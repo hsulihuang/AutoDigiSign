@@ -1,8 +1,8 @@
 """
 Auto Digital Signature for NTUH
 By Hsu-Li Huang (huang.hsuli@gmail.com)
-Version: 1.2.1
-Released: 2024-10-23
+Version: 1.2.2
+Released: 2024-10-24
 Python Version: 3.9.13
 Dependencies:
     - Selenium
@@ -10,6 +10,7 @@ Dependencies:
     - Requests
     - OpenCV
 Changelog:
+    - v1.2.2 (2024-10-24): Update for email body summary.
     - v1.2.1 (2024-10-23): Update checking email sent successfully before closing the script.
     - v1.2.0 (2024-10-23): Update automatically sending the log file after finishing.
     - v1.1.0 (2024-10-23): Update logging settings.
@@ -419,8 +420,17 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 logging.info(f"AutoDigiSign Finished: {timestamp}")
 
 # Read the content of the INFO log file to use as email body
+email_body_lines = []
 with open(log_filepath_info, 'r', encoding='utf-8') as log_file:
-    email_body = log_file.read()
+    for line in log_file:
+        # Optionally filter or modify lines
+        if "AutoDigiSign" in line or "Employee ID" in line:
+            email_body_lines.append(line)
+
+# Add custom headers or modify content as need
+email_body = "AutoDigiSign Log Summary:\n\n"
+email_body += "".join(email_body_lines)
+email_body += "\nNote: This is an automated log summary. Please check the log file for complete details."
 
 # Send the logs after completing the script
 try:
