@@ -1,7 +1,7 @@
 @echo off
 
 echo Running Python script...
-py "D:\Users\ntuhuser\Desktop\AutoDigiSign\main.py"
+py "D:\Users\ntuhuser\Desktop\AutoDigiSign\src\main.py"
 echo Python script finished. Checking exit status...
 
 REM Check if the email was sent successfully

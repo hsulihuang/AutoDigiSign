@@ -10,10 +10,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 # Generate a customized email body
-def generate_email_body(log_filepath_info):
+def generate_email_body(info_log_filepath):
     # Read the content of the INFO log file to use as email body
     email_body_lines = []
-    with open(log_filepath_info, 'r', encoding='utf-8') as log_file:
+    with open(info_log_filepath, 'r', encoding='utf-8') as log_file:
         for line in log_file:
             # Optionally filter or modify lines
             # Keep all logs of WARNING or higher levels
@@ -29,16 +29,17 @@ def generate_email_body(log_filepath_info):
             # Simplify the messages containing Employee ID
             elif "- INFO -" in line and "Employee ID" in line:
                 # Regular expression to extract employee ID and message
-                pattern = r"Employee ID: (\d+), Web message: (.*)"
+                pattern = r"Employee ID: (\d+), Name: (.*), Web message: (.*)"
                 match = re.search(pattern, line)
                 if match:
-                    employee_id = match.group(1).strip()
-                    message = match.group(2).strip()
+                    EMPLOYEE_ID = match.group(1).strip()
+                    EMPLOYEE_NAME = match.group(2).strip()
+                    message = match.group(3).strip()
 
                     # Remove '[CrossBrowser]' from the message if it exists
                     message = re.sub(r"\[CrossBrowser\]\s*", "", message)
 
-                    email_body_lines.append(f"{employee_id}: {message}\n")
+                    email_body_lines.append(f"{EMPLOYEE_ID} {EMPLOYEE_NAME}: {message}\n")
             # Ignore other INFO level logs
             elif "- INFO -" in line:
                 continue
@@ -54,10 +55,10 @@ def generate_email_body(log_filepath_info):
     return email_body
 
 # Send a email with attachment
-def send_email_with_attachment(subject, body, log_filepath_info, log_filepath_debug, log_filepath_console):
+def send_email_with_attachment(email_config_filepath, subject, body, info_log_filepath, debug_log_filepath, console_log_filepath):
     # Load email configuration from config file (can be from INI, JSON, or YAML)
     config = configparser.ConfigParser()
-    config.read('email_config.ini')
+    config.read(email_config_filepath)
 
     # Email setup
     smtp_server = config['email']['smtp_server']
@@ -81,27 +82,27 @@ def send_email_with_attachment(subject, body, log_filepath_info, log_filepath_de
     msg.attach(MIMEText(body, 'plain'))
 
     # Attach the INFO log file
-    with open(log_filepath_info, "rb") as attachment:
+    with open(info_log_filepath, "rb") as attachment:
         part = MIMEBase('application', 'octet-stream')
         part.set_payload(attachment.read())
     encoders.encode_base64(part)
-    part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(log_filepath_info)}')
+    part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(info_log_filepath)}')
     msg.attach(part)
 
     # Attach the DEBUG log file
-    with open(log_filepath_debug, "rb") as attachment:
+    with open(debug_log_filepath, "rb") as attachment:
         part = MIMEBase('application', 'octet-stream')
         part.set_payload(attachment.read())
     encoders.encode_base64(part)
-    part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(log_filepath_debug)}')
+    part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(debug_log_filepath)}')
     msg.attach(part)
 
     # Attach the Console log file
-    with open(log_filepath_console, "rb") as attachment:
+    with open(console_log_filepath, "rb") as attachment:
         part = MIMEBase('application', 'octet-stream')
         part.set_payload(attachment.read())
     encoders.encode_base64(part)
-    part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(log_filepath_console)}')
+    part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(console_log_filepath)}')
     msg.attach(part)
 
     # Send the email
