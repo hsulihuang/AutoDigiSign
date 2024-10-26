@@ -16,12 +16,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 # Function to get credentials from a config file
-def get_credentials():
+def get_credentials(credentials_filepath):
     # Create a ConfigParser instance
     config = configparser.ConfigParser()
     
     # Read the config file
-    config.read('credentials.ini')
+    config.read(credentials_filepath)
     
     # Get credentials from the config file
     USERNAME = config['credentials']['username']
@@ -31,7 +31,7 @@ def get_credentials():
     return USERNAME, PASSWORD, PINCODE
 
 # Function to download the CAPTCHA image and extract text
-def get_captcha_text(driver, timestamp):
+def get_captcha_text(driver, timestamp, captcha_folderpath):
     # Locate the image element
     img_element = driver.find_element(By.XPATH, '//*[@id="imgVerifyCode"]')
 
@@ -45,7 +45,7 @@ def get_captcha_text(driver, timestamp):
     # Check the response status
     if response.status_code == 200:
         # Specify the file name using the timestamp and location where to save the image
-        img_file_path = os.path.join('captcha', f'captcha_image_{timestamp}.gif')
+        img_file_path = os.path.join(captcha_folderpath, f'captcha_image_{timestamp}.gif')
         # Open a file in binary write mode and save the content
         with open(img_file_path, 'wb') as img_file:
             img_file.write(response.content)
@@ -56,7 +56,7 @@ def get_captcha_text(driver, timestamp):
     # Convert GIF to a supported format
     with Image.open(img_file_path) as img:
         img = img.convert("RGB")
-        converted_path = os.path.join('captcha', f'captcha_image_{timestamp}.png')
+        converted_path = os.path.join(captcha_folderpath, f'captcha_image_{timestamp}.png')
         img.save(converted_path)    
 
     # Load the converted image with OpenCV
@@ -85,7 +85,7 @@ def get_captcha_text(driver, timestamp):
     dilated = cv2.dilate(closed, kernel, iterations=1)
 
     # Save Preprocessed Image
-    preprocessed_image_path = os.path.join('captcha', f'captcha_image_{timestamp}_preprocessed.png')
+    preprocessed_image_path = os.path.join(captcha_folderpath, f'captcha_image_{timestamp}_preprocessed.png')
     cv2.imwrite(preprocessed_image_path, dilated)
 
     # Open the preprocessed image
@@ -125,14 +125,14 @@ def login(driver, USERNAME, PASSWORD, captcha_text):
     login_button.click()
 
 # Function to retry login until successful or maximum retries reached
-def retry_login(driver, timestamp, USERNAME, PASSWORD, max_retries=30):
+def retry_login(driver, timestamp, captcha_folderpath, USERNAME, PASSWORD, max_retries=30):
     retry_count = 0
     wait = WebDriverWait(driver, 1)  # Wait for page to load, adjust as needed
 
     while retry_count < max_retries:
         try:
             # Extract CAPTCHA text
-            captcha_text = get_captcha_text(driver, timestamp)
+            captcha_text = get_captcha_text(driver, timestamp, captcha_folderpath)
             logging.info(f"Attempt #{retry_count + 1}: CAPTCHA text extracted: {captcha_text}")
 
             # Wait 
@@ -180,13 +180,31 @@ def navigate(driver):
     logging.info(f"DigitalSignature page URL: {DigitalSignature_url}")
     driver.get(DigitalSignature_url)
 
+# Function to get the list of employees from a txet file
+def get_employees(employee_list_filepath):
+    # Read employee IDs and names from the text file
+    employees = []
+    with open(employee_list_filepath, 'r') as file:
+        for line in file:
+            line = line.strip()  # Remove leading/trailing whitespaces
+            if line:  # Skip empty lines
+                emp_id, emp_name = line.split(maxsplit=1)  # Split by whitespace; maxsplit=1 to avoid splitting names with spaces
+                employees.append({'id': emp_id, 'name': emp_name})
+    return employees
+    # Now `employees` is a list of dictionaries, e.g.
+    # [
+    #     {'id': '123456', 'name': 'name1'},
+    #     {'id': '110022', 'name': 'name2'},
+    #     ...
+    # ]
+
 # Function to perform Digital Signature
-def digital_signature(EMPLOYEE, PINCODE, driver):
+def digital_signature(EMPLOYEE_ID, EMPLOYEE_NAME, PINCODE, driver):
     # Enter credentials
     EmployeeID = driver.find_element(By.XPATH, '//*[@id="NTUHWeb1_txbEmpNO"]')
     EmployeeID.clear()
     EmployeeID = driver.find_element(By.XPATH, '//*[@id="NTUHWeb1_txbEmpNO"]')
-    EmployeeID.send_keys(EMPLOYEE, Keys.ENTER)
+    EmployeeID.send_keys(EMPLOYEE_ID, Keys.ENTER)
     time.sleep(1)
 
     EmployeePincode = driver.find_element(By.XPATH, '//*[@id="NTUHWeb1_txbPinCode"]')
@@ -234,21 +252,21 @@ def digital_signature(EMPLOYEE, PINCODE, driver):
 
     # Check initial state based on the patterns
     if re.search(pattern_1, message_text):
-        logging.info(f"Employee ID: {EMPLOYEE}, Web message: {message_text}")
+        logging.info(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
         flag = False  # No further action needed
     elif re.search(pattern_2, message_text):
-        logging.info(f"Employee ID: {EMPLOYEE}, Web message: {message_text}")
+        logging.info(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
         flag = False  # No further action needed
     elif re.search(pattern_3, message_text):
-        logging.error(f"Employee ID: {EMPLOYEE}, Web message: {message_text}")
+        logging.error(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
         flag = False  # Stop since ServiSign is not installed
     elif re.search(pattern_4, message_text):
-        logging.error(f"Employee ID: {EMPLOYEE}, Web message: {message_text}")
+        logging.error(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
         flag = False  # Stop since ServiSign is not installed
     elif re.search(pattern_5, message_text):
-        logging.info(f"Employee ID: {EMPLOYEE}, Web message: {message_text}")  ### This line is not working for some reason. Suspect a diffent XPATH
+        logging.info(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")  ### This line is not working for some reason. Suspect a diffent XPATH
     else:
-        logging.warning(f"Employee ID: {EMPLOYEE}, Web message: {message_text}")
+        logging.warning(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
         logging.warning('AutoDigiSign message: Warning: Exception #1')
 
     # Continue checking while flag is True (Warning)
@@ -262,12 +280,12 @@ def digital_signature(EMPLOYEE, PINCODE, driver):
 
             # Check for successful signing with regex
             if re.search(pattern_2, new_message_text):
-                logging.info(f"Employee ID: {EMPLOYEE}, Web message: {message_text}")
+                logging.info(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
                 flag = False  # Stop the loop once signing is complete
 
         except (NoSuchElementException, StaleElementReferenceException) as e:
             # Handle specific exceptions that may occur during element retrieval
-            logging.warning(f"Employee ID: {EMPLOYEE}, Web message: {message_text}")
+            logging.warning(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
             logging.warning(f'AutoDigiSign message: Warning: Exception #2. Error: {e}')
 
     # Click the close button on the pop-up window

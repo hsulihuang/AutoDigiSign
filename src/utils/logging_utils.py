@@ -4,28 +4,28 @@ import os
 import sys
 from datetime import datetime
 
-def setup_logging(timestamp=None, log_directory='logs'):
+def setup_logging(log_directory, timestamp=None):
     if timestamp is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # Create log filenames for DEBUG and INFO levels
-    log_filename_debug = f"autodigisign_debug_{timestamp}.log"
-    log_filepath_debug = os.path.join(log_directory, log_filename_debug)
-    log_filename_info = f"autodigisign_info_{timestamp}.log"
-    log_filepath_info = os.path.join(log_directory, log_filename_info)
+    debug_log_filename = f"autodigisign_debug_{timestamp}.log"
+    debug_log_filepath = os.path.join(log_directory, debug_log_filename)
+    info_log_filename = f"autodigisign_info_{timestamp}.log"
+    info_log_filepath = os.path.join(log_directory, info_log_filename)
 
     # Set up the root logger
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)  # Set root level to DEBUG to allow all messages
 
     # File handler to log everything at DEBUG level with UTF-8 encoding
-    file_handler_debug = logging.FileHandler(log_filepath_debug, mode='w', encoding='utf-8')
+    file_handler_debug = logging.FileHandler(debug_log_filepath, mode='w', encoding='utf-8')
     file_handler_debug.setLevel(logging.DEBUG)  # Record all levels of logs
     file_formatter_debug = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler_debug.setFormatter(file_formatter_debug)
 
     # File handler to log INFO level and above with UTF-8 encoding
-    file_handler_info = logging.FileHandler(log_filepath_info, mode='w', encoding='utf-8')
+    file_handler_info = logging.FileHandler(info_log_filepath, mode='w', encoding='utf-8')
     file_handler_info.setLevel(logging.INFO)  # Record only INFO and above
     file_formatter_info = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler_info.setFormatter(file_formatter_info)
@@ -42,7 +42,7 @@ def setup_logging(timestamp=None, log_directory='logs'):
     logger.addHandler(console_handler)
 
     # Return log file paths if needed
-    return log_filepath_debug, log_filepath_info
+    return debug_log_filepath, info_log_filepath
 
 def redirect_console_output(log_directory, timestamp):
     """
@@ -56,17 +56,17 @@ def redirect_console_output(log_directory, timestamp):
     tuple: Original stdout and stderr.
     """
     # Create the console log filepath
-    log_filepath_console = os.path.join(log_directory, f'autodigisign_console_{timestamp}.log')
+    console_log_filepath = os.path.join(log_directory, f'autodigisign_console_{timestamp}.log')
     
     # Save the original stdout and stderr
     original_stdout = sys.stdout
     original_stderr = sys.stderr
 
     # Redirect stdout and stderr
-    sys.stdout = open(log_filepath_console, 'w', encoding='utf-8')
+    sys.stdout = open(console_log_filepath, 'w', encoding='utf-8')
     sys.stderr = sys.stdout
 
-    return log_filepath_console, original_stdout, original_stderr
+    return console_log_filepath, original_stdout, original_stderr
 
 def restore_console_output(original_stdout, original_stderr):
     """
@@ -79,4 +79,3 @@ def restore_console_output(original_stdout, original_stderr):
     sys.stdout.close()  # Close the log file before restoring
     sys.stdout = original_stdout
     sys.stderr = original_stderr
-    

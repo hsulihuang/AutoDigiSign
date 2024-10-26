@@ -1,6 +1,6 @@
 # Customize files and directories
-captcha/
-logs/
+inputs/
+outputs/
 storehouse/
 WebDriver/
 credentials.ini

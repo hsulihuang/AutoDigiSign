@@ -1,23 +1,4 @@
 # main.py
-"""
-Auto Digital Signature for NTUH
-By Hsu-Li Huang (huang.hsuli@gmail.com)
-Version: 1.3.0
-Released: 2024-10-26
-Python Version: 3.9.13
-Dependencies:
-    - Selenium
-    - Tesseract OCR
-    - Requests
-    - OpenCV
-Changelog:
-    - V1.3.0 (2024-10-26): Encapsulate new functions and refactor functions into separate modules.
-    - v1.2.2 (2024-10-24): Update email body summary.
-    - v1.2.1 (2024-10-23): Update checking email sent successfully before closing the script.
-    - v1.2.0 (2024-10-23): Update automatically sending the log file after finishing.
-    - v1.1.0 (2024-10-23): Update logging settings.
-    - v1.0.0 (2024-10-22): Initial release with automated login, CAPTCHA solving, digital signature functionality.
-"""
 
 # ========================
 # Imports and Dependencies
@@ -36,9 +17,10 @@ from selenium import webdriver
 from selenium.webdriver.edge.service import Service
 
 # Local Application Imports
-from logging_utils import setup_logging, redirect_console_output, restore_console_output
-from email_utils import generate_email_body, send_email_with_attachment
-from autodigisign_utils import get_credentials, get_captcha_text, login, retry_login, navigate, digital_signature
+from utils.autodigisign_utils import get_credentials, retry_login, navigate, get_employees, digital_signature
+from utils.email_utils import generate_email_body, send_email_with_attachment
+from utils.item_locator import find_item
+from utils.logging_utils import setup_logging, redirect_console_output, restore_console_output
 
 # ======================
 # Configuration Settings
@@ -56,17 +38,30 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g., 20241021_103015
 # ================
 
 # Set up logging
-log_filepath_debug, log_filepath_info = setup_logging(timestamp=timestamp, log_directory='logs')
+log_directory = os.path.join('outputs', 'logs')
+debug_log_filepath, info_log_filepath = setup_logging(log_directory=log_directory, timestamp=timestamp)
 
 # Redirect stdout and stderr to the console log file
-log_filepath_console, original_stdout, original_stderr = redirect_console_output(log_directory='logs', timestamp=timestamp)
+console_log_filepath, original_stdout, original_stderr = redirect_console_output(log_directory=log_directory, timestamp=timestamp)
 
 # Log a start message
 logging.info(f"AutoDigiSign Started: {timestamp}")
 
-# ================================
-# Tesseract and WebDriver Settings
-# ================================
+# ===============================
+# Files and Folders Path Settings
+# ===============================
+
+skip_dirs = ['captcha', 'logs', 'storehouse', 'WebDriver']
+credentials_filepath = find_item('credentials.ini', skip_dirs=skip_dirs)
+email_config_filepath = find_item('email_config.ini', skip_dirs=skip_dirs)
+employee_list_filepath = find_item('employee_list.txt', skip_dirs=skip_dirs)
+
+captcha_folderpath = os.path.join('outputs', 'captcha')
+logs_folderpath = os.path.join('outputs', 'logs')
+
+# =====================================
+# Tesseract and WebDriver Path Settings
+# =====================================
 
 # Set the path to the Tesseract executable
 if os.name == 'posix':
@@ -88,18 +83,18 @@ else:
     logging.error("Unsupported Operating System for WebDriver setup.")
     raise EnvironmentError("Unsupported Operating System for WebDriver setup.")
 
-# Set up the WebDriver
-driver = webdriver.Edge(service=Service(driver_path))
-
 # ================
 # Main Application
 # ================
+
+# Set up the WebDriver
+driver = webdriver.Edge(service=Service(driver_path))
 
 # Open the specified URL
 driver.get('https://portal.ntuh.gov.tw/General/Login.aspx')
 
 # Get credentials including USERNAME, PASSWORD, PINCODE from a config file
-USERNAME, PASSWORD, PINCODE = get_credentials()
+USERNAME, PASSWORD, PINCODE = get_credentials(credentials_filepath)
 
 # Retry login until successful
 if not retry_login(driver, timestamp, USERNAME, PASSWORD, max_retries=30):
@@ -109,19 +104,20 @@ if not retry_login(driver, timestamp, USERNAME, PASSWORD, max_retries=30):
 # Navigate to the DigitalSignature page
 navigate(driver)
 
-# Read employee IDs from the text file
-with open('employee_ids.txt', 'r') as file:
-    employee_ids = [line.strip() for line in file]
-##employee_ids = ['113900', '119377']  # this line for testing
+# Read employee IDs and names from the text file
+employees = get_employees(employee_list_filepath)
 
-# Loop through each employee ID in the list to try DigitalSignature
-for EMPLOYEE in employee_ids:
+# Iterate through the employee list as follows
+for employee in employees:
+    EMPLOYEE_ID = employee['id']
+    EMPLOYEE_NAME = employee['name']
     try:
-        # Try DigitalSignature
-        digital_signature(EMPLOYEE, PINCODE, driver)
-
+        # Perform digital signature operation with EMPLOYEE_ID
+        digital_signature(EMPLOYEE_ID, PINCODE, driver)
+        # Optionally log or print the name for better context
+        logging.info(f"Digital signature performed for Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}")
     except Exception as e:
-        logging.error(f"An error occurred while checking employee ID {EMPLOYEE}: {e}")
+        logging.error(f"An error occurred while processing Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}: {e}")
 
     # Optional: Pause for a moment before the next lookup (to avoid overwhelming the server)
     time.sleep(1)
@@ -134,8 +130,8 @@ driver.quit()
 # ================
 
 # Log a finish message
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-logging.info(f"AutoDigiSign Finished: {timestamp}")
+timestamp_finish = datetime.now().strftime("%Y%m%d_%H%M%S")
+logging.info(f"AutoDigiSign Finished: {timestamp_finish}")
 
 # After script completion, restore stdout and stderr to the terminal
 restore_console_output(original_stdout, original_stderr)
@@ -145,16 +141,17 @@ restore_console_output(original_stdout, original_stderr)
 # ==============
 
 # Generate email body using custom function
-email_body = generate_email_body(log_filepath_info)
+email_body = generate_email_body(info_log_filepath)
 
 # Send the logs after completing the script
 try:
     send_email_with_attachment(
+        email_config_filepath=email_config_filepath,
         subject=f"{timestamp} AutoDigiSign Finished Successfully",
         body=email_body,
-        log_filepath_info=log_filepath_info,
-        log_filepath_debug=log_filepath_debug,
-        log_filepath_console=log_filepath_console
+        info_log_filepath=info_log_filepath,
+        debug_log_filepath=debug_log_filepath,
+        console_log_filepath=console_log_filepath
     )
     print("Email sent successfully.")
     sys.exit(0)  # Exit with success code
