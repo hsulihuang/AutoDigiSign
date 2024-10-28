@@ -3,6 +3,7 @@ inputs/
 outputs/
 storehouse/
 WebDriver/
+README.md
 credentials.ini
 email_config.ini
 employee_ids.txt
