@@ -184,7 +184,7 @@ def navigate(driver):
 def get_employees(employee_list_filepath):
     # Read employee IDs and names from the text file
     employees = []
-    with open(employee_list_filepath, 'r') as file:
+    with open(employee_list_filepath, 'r', encoding='utf-8') as file:
         for line in file:
             line = line.strip()  # Remove leading/trailing whitespaces
             if line:  # Skip empty lines

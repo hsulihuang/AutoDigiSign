@@ -9,7 +9,17 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-# Generate a customized email body
+# Function to determine the email subject before sending the email:
+def generate_email_subject(info_log_filepath, timestamp):
+    # Check if the log file contains 'error', 'warning', or 'critical'
+    with open(info_log_filepath, 'r', encoding='utf-8') as log_file:
+        for line in log_file:
+            if any(keyword in line.lower() for keyword in ['error', 'warning', 'critical']):
+                return f"{timestamp} [Alert] AutoDigiSign Finished"
+    # If none of the above words are found, return the normal subject
+    return f"{timestamp} AutoDigiSign Finished Successfully"
+
+# Function to generate a customized email body
 def generate_email_body(info_log_filepath):
     # Read the content of the INFO log file to use as email body
     email_body_lines = []
@@ -39,7 +49,11 @@ def generate_email_body(info_log_filepath):
                     # Remove '[CrossBrowser]' from the message if it exists
                     message = re.sub(r"\[CrossBrowser\]\s*", "", message)
 
-                    email_body_lines.append(f"{EMPLOYEE_ID} {EMPLOYEE_NAME}: {message}\n")
+                    # Shorten the message
+                    if re.search("查無待簽章電子病歷資料", message):
+                        message = "無待簽章"
+
+                    email_body_lines.append(f"{EMPLOYEE_NAME}({EMPLOYEE_ID}){message}\n")
             # Ignore other INFO level logs
             elif "- INFO -" in line:
                 continue
@@ -54,7 +68,7 @@ def generate_email_body(info_log_filepath):
     
     return email_body
 
-# Send a email with attachment
+# Function to send a email with attachment
 def send_email_with_attachment(email_config_filepath, subject, body, info_log_filepath, debug_log_filepath, console_log_filepath):
     # Load email configuration from config file (can be from INI, JSON, or YAML)
     config = configparser.ConfigParser()

@@ -1,5 +1,8 @@
 ### Changelog
 
+- **v1.4.1** (2024-10-28)
+  - **Fixed**: Bug causing failure to perform digital signature for automated script execution.
+
 - **v1.4.0** (2024-10-27)
   - **Added**: item_locator.py for finding items (files or folders) in the directory structure.
   - **Changed**: Reorganized project folders for improved clarity and separation of concerns.

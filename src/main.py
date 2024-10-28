@@ -18,7 +18,7 @@ from selenium.webdriver.edge.service import Service
 
 # Local Application Imports
 from utils.autodigisign_utils import get_credentials, retry_login, navigate, get_employees, digital_signature
-from utils.email_utils import generate_email_body, send_email_with_attachment
+from utils.email_utils import generate_email_subject, generate_email_body, send_email_with_attachment
 from utils.item_locator import find_item
 from utils.logging_utils import setup_logging, redirect_console_output, restore_console_output
 
@@ -95,9 +95,11 @@ driver.get('https://portal.ntuh.gov.tw/General/Login.aspx')
 
 # Get credentials including USERNAME, PASSWORD, PINCODE from a config file
 USERNAME, PASSWORD, PINCODE = get_credentials(credentials_filepath)
+if USERNAME and PASSWORD and PINCODE:
+    logging.info("Got credentials successfully.")
 
 # Retry login until successful
-if not retry_login(driver, timestamp, USERNAME, PASSWORD, max_retries=30):
+if not retry_login(driver, timestamp, captcha_folderpath, USERNAME, PASSWORD, max_retries=30):
     logging.error("Exiting the script due to unsuccessful login.")
     sys.exit(1)  # Exit with failure code
 
@@ -106,6 +108,8 @@ navigate(driver)
 
 # Read employee IDs and names from the text file
 employees = get_employees(employee_list_filepath)
+if employees:
+    logging.info("Got employees successfully.")
 
 # Iterate through the employee list as follows
 for employee in employees:
@@ -113,7 +117,7 @@ for employee in employees:
     EMPLOYEE_NAME = employee['name']
     try:
         # Perform digital signature operation with EMPLOYEE_ID
-        digital_signature(EMPLOYEE_ID, PINCODE, driver)
+        digital_signature(EMPLOYEE_ID, EMPLOYEE_NAME, PINCODE, driver)
         # Optionally log or print the name for better context
         logging.info(f"Digital signature performed for Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}")
     except Exception as e:
@@ -140,14 +144,15 @@ restore_console_output(original_stdout, original_stderr)
 # Email Settings
 # ==============
 
-# Generate email body using custom function
+# Generate email subject and body based on log contents
+email_subject = generate_email_subject(info_log_filepath, timestamp)
 email_body = generate_email_body(info_log_filepath)
 
 # Send the logs after completing the script
 try:
     send_email_with_attachment(
         email_config_filepath=email_config_filepath,
-        subject=f"{timestamp} AutoDigiSign Finished Successfully",
+        subject=email_subject,
         body=email_body,
         info_log_filepath=info_log_filepath,
         debug_log_filepath=debug_log_filepath,
