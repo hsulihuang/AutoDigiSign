@@ -3,6 +3,7 @@ inputs/
 outputs/
 storehouse/
 WebDriver/
+local_test.ipynb
 credentials.ini
 email_config.ini
 employee_ids.txt

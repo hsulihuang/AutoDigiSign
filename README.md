@@ -204,13 +204,13 @@ To run AutoDigiSign on macOS, follow these steps:
    Open the terminal and navigate to the directory containing `main.py`:
 
    ```sh
-   cd ~/AutoDigiSign/src
+   cd ~path/to/AutoDigiSign
    ```
 
    - Run the script:
 
    ```sh
-   python main.py
+   python src/main.py
    ```
 
 2. **Automate with Launchd**

@@ -14,7 +14,8 @@ from datetime import datetime
 # Third-Party Imports
 import pytesseract
 from selenium import webdriver
-from selenium.webdriver.edge.service import Service
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.edge.service import Service as EdgeService
 
 # Local Application Imports
 from utils.autodigisign_utils import get_credentials, retry_login, navigate, get_employees, digital_signature
@@ -72,13 +73,15 @@ else:
     logging.error("Unsupported Operating System for Tesseract setup.")
     raise EnvironmentError("Unsupported Operating System for Tesseract setup.")
 
-# Set up the Selenium WebDriver path
+# Set up the Selenium WebDriver
 if os.name == 'posix':
     # For macOS-arm64 with ChromeDriver (version 130)
     driver_path = os.path.join('WebDriver', 'chromedriver-mac-arm64-v130', 'chromedriver')
+    driver = webdriver.Chrome(service=ChromeService(driver_path))
 elif os.name == 'nt':
     # For Windows-x64 with Microsoft Edge WebDriver (version 125)
     driver_path = os.path.join('WebDriver', 'edgedriver_win64_v125', 'msedgedriver.exe')
+    driver = webdriver.Edge(service=EdgeService(driver_path))
 else:
     logging.error("Unsupported Operating System for WebDriver setup.")
     raise EnvironmentError("Unsupported Operating System for WebDriver setup.")
@@ -86,9 +89,6 @@ else:
 # ================
 # Main Application
 # ================
-
-# Set up the WebDriver
-driver = webdriver.Edge(service=Service(driver_path))
 
 # Open the specified URL
 driver.get('https://portal.ntuh.gov.tw/General/Login.aspx')
