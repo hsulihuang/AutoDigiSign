@@ -1,7 +1,0 @@
-1. 更新員工清單: 編輯 \inputs\employee_list.txt
-
-2. 更換卡片持有者: 編輯 \inputs\credentials.ini
-
-3. 手動執行: 雙擊 launcher_win64.bat
-
-4. 排程執行: 使用 Windows 工作排程器
