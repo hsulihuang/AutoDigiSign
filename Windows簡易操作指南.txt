@@ -1,0 +1,9 @@
+簡易操作指南 on Windows
+
+1. 更新待簽章員工清單: 編輯 \inputs\employee_list.txt
+
+2. 更換醫事人員卡持有者: 編輯 \inputs\configs\credentials.ini
+
+3. 手動執行: 雙擊 launcher_win64.bat
+
+4. 排程執行: 使用 Windows 工作排程器
