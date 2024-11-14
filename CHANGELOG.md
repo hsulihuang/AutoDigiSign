@@ -1,5 +1,8 @@
 ### Changelog
 
+- **v1.5.0** (2024-11-14)
+  - **Added**: Check for delay-sign dialog during the signing process to handle cases where a confirmation is needed before proceeding.
+
 - **v1.4.1** (2024-10-28)
   - **Fixed**: Bug causing failure to perform digital signature for automated script execution.
 
@@ -21,7 +24,7 @@
   - **Added**: Automatic email sending of the log file after script completion.
 
 - **v1.1.0** (2024-10-23)
-  - **Changed**: Updated logging settings for improved debugging and reporting.
+  - **Added**: Updated logging settings for improved debugging and reporting.
 
 - **v1.0.0** (2024-10-22)
   - **Initial Release**: Automated login, CAPTCHA solving, and digital signature functionality.
