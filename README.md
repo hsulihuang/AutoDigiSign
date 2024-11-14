@@ -1,5 +1,7 @@
 # AutoDigiSign README
 
+by [hsulihuang](https://github.com/hsulihuang) ([huang.hsuli@gmail.com](mailto\:huang.hsuli@gmail.com))
+
 ## Overview
 
 AutoDigiSign is a Python-based automated document signing tool designed to streamline digital signatures for medical records at National Taiwan University Hospital (NTUH). This project integrates multiple utilities to facilitate login, manage digital signatures, and handle email communications, creating an efficient workflow. 
@@ -201,13 +203,13 @@ To run AutoDigiSign on macOS, follow these steps:
 
 1. **Run the Application**
 
-   Open the terminal and navigate to the directory containing `main.py`:
+   Open the terminal and navigate to the working directory :
 
    ```sh
    cd ~path/to/AutoDigiSign
    ```
 
-   - Run the script:
+   - Run the `main.py` script:
 
    ```sh
    python src/main.py

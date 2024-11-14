@@ -215,6 +215,12 @@ def digital_signature(EMPLOYEE_ID, EMPLOYEE_NAME, PINCODE, driver):
     sign_button = driver.find_element(By.XPATH, '//*[@id="NTUHWeb1_btnDoSignatureByCrossBroswer"]')
     sign_button.click()
 
+    # Check whether there is a dialog-form for delay-sign
+    if driver.find_element(By.XPATH, '//*[@id="dialog-form"]'):
+        # If the dialog-form exists, click the sign button to proceed with signing
+        delay_sign_button = driver.find_element(By.XPATH, '/html/body/div/div[11]/div/button[1]')
+        delay_sign_button.click()  # (選擇「延遲簽章原因」為「臨床業務繁忙」)
+
     # Pause briefly to allow the pop-up to open
     time.sleep(1)
 
