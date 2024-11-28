@@ -1,7 +1,10 @@
 ### Changelog
 
+- **v1.5.1** (2024-11-28)
+  - **Fixed**: Updated delay-sign handling logic to avoid any interruptions in automated signing.
+
 - **v1.5.0** (2024-11-14)
-  - **Added**: Check for delay-sign dialog during the signing process to handle cases where a confirmation is needed before proceeding.
+  - **Added**: Functionality to detect and handle the delay-sign dialog during the signing process. This includes selecting a reason and confirming the action if the dialog appears.
 
 - **v1.4.1** (2024-10-28)
   - **Fixed**: Bug causing failure to perform digital signature for automated script execution.

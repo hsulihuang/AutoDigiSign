@@ -216,10 +216,30 @@ def digital_signature(EMPLOYEE_ID, EMPLOYEE_NAME, PINCODE, driver):
     sign_button.click()
 
     # Check whether there is a dialog-form for delay-sign
-    if driver.find_element(By.XPATH, '//*[@id="dialog-form"]'):
-        # If the dialog-form exists, click the sign button to proceed with signing
-        delay_sign_button = driver.find_element(By.XPATH, '/html/body/div/div[11]/div/button[1]')
-        delay_sign_button.click()  # (選擇「延遲簽章原因」為「臨床業務繁忙」)
+    try:
+        # Attempt to locate the dialog-form by its ID
+        dialog = driver.find_element(By.XPATH, '//*[@id="dialog-form"]')
+
+        # Check if the dialog is actually displayed
+        if dialog.is_displayed():
+            # The dialog is visible, proceed with selecting a reason and clicking 'Confirm'
+            delay_sign_button = driver.find_element(By.XPATH, "//button[span[text()='確定']]")
+            # Note: The reason dropdown list is pre-selected with a default value, so we can directly proceed to click 'Confirm'
+            delay_sign_button.click()
+            # Submit the DigitalSignature form again
+            sign_button.click()
+
+            # Log the successful interaction
+            logging.info("Delay-sign dialog found and confirmed.")
+        else:
+            logging.info("Delay-sign dialog found but not visible.")
+
+    except NoSuchElementException:
+        # If the dialog is not found, log that no delay-sign action was necessary
+        logging.info("No delay-sign dialog was present.")
+    except Exception as e:
+        # Catch any other exceptions that may occur and log the error
+        logging.warning(f"An unexpected error occurred while handling delay-sign: {e}")
 
     # Pause briefly to allow the pop-up to open
     time.sleep(1)
