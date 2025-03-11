@@ -1,8 +1,22 @@
 簡易操作指南 on Windows
 
 1. 更新待簽章員工清單: 編輯 \inputs\employee_list.txt
+範例：
+"""
+060489 甲ＯＯ
+112358 乙ＯＯ
+142857 丙ＯＯ
+"""
 
-2. 更換醫事人員卡持有者: 編輯 \inputs\configs\credentials.ini
+2. 更新醫事人員卡持有者資訊: 編輯 \inputs\configs\credentials.ini
+說明：username = 員工編號，password = portal密碼，pincode = 醫事人員卡密碼
+範例：
+"""
+[credentials]
+username = 060489
+password = ntuh1234ntuh
+pincode = 123456
+"""
 
 3. 手動執行: 雙擊 launcher_win64.bat
 
