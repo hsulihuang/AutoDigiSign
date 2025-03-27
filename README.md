@@ -1,6 +1,6 @@
 # AutoDigiSign README
 
-by [hsulihuang](https://github.com/hsulihuang) ([huang.hsuli@gmail.com](mailto\:huang.hsuli@gmail.com))
+by [hsulihuang](https://github.com/hsulihuang)
 
 ## Overview
 
@@ -233,9 +233,4 @@ This project is licensed under the MIT License. See `LICENSE.md` for more detail
 
 ## Contact
 
-Feel free to contribute to this project by creating pull requests or opening issues on GitHub. Contributions can include code improvements, additional features, or bug fixes. Please refer to the GitHub repository for more information.
-
-For questions or support, please contact:
-
-- **Email**: [huang.hsuli@gmail.com](mailto\:huang.hsuli@gmail.com)
-- **GitHub**: [hsulihuang](https://github.com/hsulihuang)
+Feel free to contribute to this project by creating pull requests or opening issues on GitHub. Contributions can include code improvements, additional features, or bug fixes. Please refer to the [GitHub repository](https://github.com/hsulihuang/AutoDigiSign) for more information.
