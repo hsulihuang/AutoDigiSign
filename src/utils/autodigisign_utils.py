@@ -9,11 +9,21 @@ import re
 import requests
 import time
 from PIL import Image
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+
+# Function to handle stale and missing elements in Document Object Model (DOM)
+def safe_find(driver, by, value, retries=3, delay=1):
+    for _ in range(retries):
+        try:
+            elem = driver.find_element(by, value)
+            return elem
+        except (StaleElementReferenceException, NoSuchElementException):
+            time.sleep(delay)
+    raise Exception(f"Element not found or went stale after retries: {value}")
 
 # Function to get credentials from a config file
 def get_credentials(credentials_filepath):
@@ -33,7 +43,7 @@ def get_credentials(credentials_filepath):
 # Function to download the CAPTCHA image and extract text
 def get_captcha_text(driver, timestamp, captcha_folderpath):
     # Locate the image element
-    img_element = driver.find_element(By.XPATH, '//*[@id="imgVerifyCode"]')
+    img_element = safe_find(driver, By.XPATH, '//*[@id="imgVerifyCode"]')
 
     # Get the 'src' attribute of the image element
     img_url = img_element.get_attribute('src')
@@ -109,19 +119,19 @@ def get_captcha_text(driver, timestamp, captcha_folderpath):
 # Function to perform login
 def login(driver, USERNAME, PASSWORD, captcha_text):
     # Enter credentials
-    UserID = driver.find_element(By.XPATH, '//*[@id="txtUserID"]')
+    UserID = safe_find(driver, By.XPATH, '//*[@id="txtUserID"]')
     UserID.clear()
     UserID.send_keys(USERNAME)
     
-    UserPW = driver.find_element(By.XPATH, '//*[@id="txtPass"]')
+    UserPW = safe_find(driver, By.XPATH, '//*[@id="txtPass"]')
     UserPW.clear()
     UserPW.send_keys(PASSWORD)
     
-    VerifyCode = driver.find_element(By.XPATH, '//*[@id="txtVerifyCode"]')
+    VerifyCode = safe_find(driver, By.XPATH, '//*[@id="txtVerifyCode"]')
     VerifyCode.clear()
     VerifyCode.send_keys(captcha_text)
     
-    login_button = driver.find_element(By.XPATH, '//*[@id="imgBtnSubmitNew"]')
+    login_button = safe_find(driver, By.XPATH, '//*[@id="imgBtnSubmitNew"]')
     login_button.click()
 
 # Function to retry login until successful or maximum retries reached
@@ -198,48 +208,66 @@ def get_employees(employee_list_filepath):
     #     ...
     # ]
 
+# Function to check whether there is a dialog-form for delay-sign
+def handle_delay_sign_dialog(driver):
+    try:
+        # Attempt to locate the dialog-form by its ID
+        dialog = safe_find(driver, By.XPATH, '//*[@id="dialog-form"]')
+
+        try:
+            # Check if the dialog is actually displayed
+            if dialog.is_displayed():
+                logging.info("Delay-sign dialog is visible.")
+
+                # Try to click the '確定' button with a retry mechanism
+                for _ in range(2):
+                    try:
+                        delay_sign_button = safe_find(driver, By.XPATH, "//button[span[text()='確定']]")
+                        delay_sign_button.click()
+                        break  # Success
+                    except StaleElementReferenceException:
+                        logging.warning("Stale reference when clicking delay-sign confirm button; retrying...")
+
+                # Re-click the sign button
+                for _ in range(2):
+                    try:
+                        sign_button = safe_find(driver, By.XPATH, '//*[@id="NTUHWeb1_btnDoSignatureByCrossBroswer"]')
+                        sign_button.click()
+                        break
+                    except StaleElementReferenceException:
+                        logging.warning("Stale reference when re-clicking sign button; retrying...")
+
+                logging.info("Delay-sign dialog found and confirmed.")
+            else:
+                logging.info("Delay-sign dialog found but not visible.")
+
+        except StaleElementReferenceException as e:
+            logging.warning(f"Stale reference when checking dialog visibility: {e}")
+
+    except NoSuchElementException:
+        logging.info("No delay-sign dialog was present.")
+    except Exception as e:
+        logging.warning(f"An unexpected error occurred while handling delay-sign: {e}")
+
 # Function to perform Digital Signature
 def digital_signature(EMPLOYEE_ID, EMPLOYEE_NAME, PINCODE, driver):
     # Enter credentials
-    EmployeeID = driver.find_element(By.XPATH, '//*[@id="NTUHWeb1_txbEmpNO"]')
+    EmployeeID = safe_find(driver, By.XPATH, '//*[@id="NTUHWeb1_txbEmpNO"]')
     EmployeeID.clear()
-    EmployeeID = driver.find_element(By.XPATH, '//*[@id="NTUHWeb1_txbEmpNO"]')
+    EmployeeID = safe_find(driver, By.XPATH, '//*[@id="NTUHWeb1_txbEmpNO"]')
     EmployeeID.send_keys(EMPLOYEE_ID, Keys.ENTER)
     time.sleep(1)
 
-    EmployeePincode = driver.find_element(By.XPATH, '//*[@id="NTUHWeb1_txbPinCode"]')
+    EmployeePincode = safe_find(driver, By.XPATH, '//*[@id="NTUHWeb1_txbPinCode"]')
     EmployeePincode.send_keys(PINCODE)
     time.sleep(1)
 
     # Submit the DigitalSignature form
-    sign_button = driver.find_element(By.XPATH, '//*[@id="NTUHWeb1_btnDoSignatureByCrossBroswer"]')
+    sign_button = safe_find(driver, By.XPATH, '//*[@id="NTUHWeb1_btnDoSignatureByCrossBroswer"]')
     sign_button.click()
 
     # Check whether there is a dialog-form for delay-sign
-    try:
-        # Attempt to locate the dialog-form by its ID
-        dialog = driver.find_element(By.XPATH, '//*[@id="dialog-form"]')
-
-        # Check if the dialog is actually displayed
-        if dialog.is_displayed():
-            # The dialog is visible, proceed with selecting a reason and clicking 'Confirm'
-            delay_sign_button = driver.find_element(By.XPATH, "//button[span[text()='確定']]")
-            # Note: The reason dropdown list is pre-selected with a default value, so we can directly proceed to click 'Confirm'
-            delay_sign_button.click()
-            # Submit the DigitalSignature form again
-            sign_button.click()
-
-            # Log the successful interaction
-            logging.info("Delay-sign dialog found and confirmed.")
-        else:
-            logging.info("Delay-sign dialog found but not visible.")
-
-    except NoSuchElementException:
-        # If the dialog is not found, log that no delay-sign action was necessary
-        logging.info("No delay-sign dialog was present.")
-    except Exception as e:
-        # Catch any other exceptions that may occur and log the error
-        logging.warning(f"An unexpected error occurred while handling delay-sign: {e}")
+    #handle_delay_sign_dialog(driver)  ## Deactivated. Not needed for now.
 
     # Pause briefly to allow the pop-up to open
     time.sleep(1)
@@ -263,7 +291,7 @@ def digital_signature(EMPLOYEE_ID, EMPLOYEE_NAME, PINCODE, driver):
         # Web Message #3: 載入失敗，錯誤代碼:[61001] 一般性錯誤，ServiSign主程式-未安裝完成，請重新安裝試試看.
         # Web Message #4: 初始化密碼模組失敗:9056
         # Web Message #5: 批次電子簽章作業中，請勿於中途取出醫事人員卡，待簽章完成後再取出卡片。
-    message_element = driver.find_element(By.XPATH, '//*[@id="dsInfo"]')
+    message_element = safe_find(driver, By.XPATH, '//*[@id="dsInfo"]')
     message_text = message_element.text
 
     # Check whether there is any medical record to be sign
@@ -302,20 +330,20 @@ def digital_signature(EMPLOYEE_ID, EMPLOYEE_NAME, PINCODE, driver):
             time.sleep(3)
 
             # Update the current message
-            new_message_text = driver.find_element(By.XPATH, '//*[@id="dsInfo"]').text
+            new_message_text = safe_find(driver, By.XPATH, '//*[@id="dsInfo"]').text
 
             # Check for successful signing with regex
             if re.search(pattern_2, new_message_text):
                 logging.info(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
                 flag = False  # Stop the loop once signing is complete
 
-        except (NoSuchElementException, StaleElementReferenceException) as e:
+        except (StaleElementReferenceException, NoSuchElementException) as e:
             # Handle specific exceptions that may occur during element retrieval
             logging.warning(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
             logging.warning(f'AutoDigiSign message: Warning: Exception #2. Error: {e}')
 
     # Click the close button on the pop-up window
-    close_button = driver.find_element(By.XPATH, '//*[@id="confirmBtn"]')
+    close_button = safe_find(driver, By.XPATH, '//*[@id="confirmBtn"]')
     close_button.click()
 
     # At this point, the pop-up window is closed

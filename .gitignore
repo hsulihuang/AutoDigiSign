@@ -1,21 +1,41 @@
-# Customize files and directories
+# -----------------------------------------------------------------------------
+# Project‑specific data, artifacts & secrets
+# -----------------------------------------------------------------------------
 inputs/
 outputs/
 storehouse/
 WebDriver/
+
+# Local notebooks & credentials (do **not** commit!)
 local_test.ipynb
 credentials.ini
 email_config.ini
 employee_ids.txt
+.env
+*.env
 
-# Byte-compiled / optimized / DLL files
+# -----------------------------------------------------------------------------
+# Jupyter notebooks
+# -----------------------------------------------------------------------------
+*.ipynb
+.ipynb_checkpoints/
+
+# -----------------------------------------------------------------------------
+# Python byte‑code, C‑extensions & caches
+# -----------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
-
-# C extensions
+*.pyd
 *.so
+*.dylib
 
-# Distribution / packaging
+# mypy / Ruff / other tooling caches
+.mypy_cache/
+.ruff_cache/
+
+# -----------------------------------------------------------------------------
+# Packaging, build & installer artifacts
+# -----------------------------------------------------------------------------
 .Python
 build/
 develop-eggs/
@@ -23,32 +43,66 @@ dist/
 downloads/
 eggs/
 .eggs/
+*.egg
+*.egg-info/
+wheels/
+pip-wheel-metadata/
 lib/
 lib64/
 parts/
-sdist/
 var/
-*.egg-info/
+sdist/
 .installed.cfg
-*.egg
+pip-log.txt
+pip-delete-this-directory.txt
+*.manifest
+*.spec
 
-# Logs and temp files
+# -----------------------------------------------------------------------------
+# Test, coverage & CI artifacts
+# -----------------------------------------------------------------------------
+.tox/
+.nox/
+.pytest_cache/
+.cache/
+coverage.xml
+htmlcov/
+.coverage*
+
+# -----------------------------------------------------------------------------
+# Virtual environments (common names)
+# -----------------------------------------------------------------------------
+venv/
+ENV/
+env/
+venv.bak/
+env.bak/
+
+# -----------------------------------------------------------------------------
+# IDE / Editor settings
+# -----------------------------------------------------------------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# -----------------------------------------------------------------------------
+# Logs & temporary files
+# -----------------------------------------------------------------------------
 *.log
 *.tmp
+*.temp
+*.bak
+*.swp
+*.orig
 
-# Virtual environments
-venv/
-env/
-
-# Jupyter Notebook checkpoints
-.ipynb_checkpoints/
-
-# Visual Studio Code settings
-.vscode/
-
-# macOS files
+# -----------------------------------------------------------------------------
+# OS‑generated files
+# -----------------------------------------------------------------------------
 .DS_Store
-
-# Windows files
+.Spotlight-V100
+.Trashes
 Thumbs.db
+ehthumbs.db
 desktop.ini
+Icon?

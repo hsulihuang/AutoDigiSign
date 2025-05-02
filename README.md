@@ -1,6 +1,6 @@
 # AutoDigiSign README
 
-by [hsulihuang](https://github.com/hsulihuang) ([huang.hsuli@gmail.com](mailto\:huang.hsuli@gmail.com))
+by [hsulihuang](https://github.com/hsulihuang)
 
 ## Overview
 
@@ -29,8 +29,8 @@ src
  │   └── logging_utils.py
  └── main.py
 WebDriver
- ├── chromedriver-mac-arm64-v130
- └── edgedriver_win64_v125
+ ├── chromedriver-mac-arm64
+ └── edgedriver_win64
 CHANGELOG.md
 launcher_win64.bat
 LICENSE.md
@@ -58,8 +58,8 @@ requirements.txt
     - `logging_utils.py`: Functions for logging activities.
   - `main.py`: The main script that initiates the automation process.
 - **WebDriver**: Contains drivers needed for browser automation.
-  - `chromedriver-mac-arm64-v130`: Chrome WebDriver for macOS ARM64.
-  - `edgedriver_win64_v125`: Edge WebDriver for Windows 64-bit.
+  - `chromedriver-mac-arm64`: Chrome WebDriver for macOS ARM64.
+  - `edgedriver_win64`: Edge WebDriver for Windows 64-bit.
 - **CHANGELOG.md**: Records changes and updates made to the project.
 - **launcher_win64.bat**: Batch script to launch the application on Windows 64-bit.
 - **LICENSE.md**: Contains the MIT License under which this project is distributed.
@@ -233,9 +233,4 @@ This project is licensed under the MIT License. See `LICENSE.md` for more detail
 
 ## Contact
 
-Feel free to contribute to this project by creating pull requests or opening issues on GitHub. Contributions can include code improvements, additional features, or bug fixes. Please refer to the GitHub repository for more information.
-
-For questions or support, please contact:
-
-- **Email**: [huang.hsuli@gmail.com](mailto\:huang.hsuli@gmail.com)
-- **GitHub**: [hsulihuang](https://github.com/hsulihuang)
+Feel free to contribute to this project by creating pull requests or opening issues on GitHub. Contributions can include code improvements, additional features, or bug fixes. Please refer to the [GitHub repository](https://github.com/hsulihuang/AutoDigiSign) for more information.

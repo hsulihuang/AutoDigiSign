@@ -1,5 +1,10 @@
 ### Changelog
 
+- **v1.6.0** (2025-05-02)
+  - **Added**: Updated autodigisign_utils.py to handle stale and missing elements in Document Object Model.
+  - **Changed**: Deactivated the function for checking whether there is a dialog-form for delay-sign.
+  - **Changed**: Updated ChromeDriver to version 136.0.7103.49 and Microsoft Edge WebDriver to version 134.0.3124.119.
+
 - **v1.5.1** (2024-11-28)
   - **Fixed**: Updated delay-sign handling logic to avoid any interruptions in automated signing.
 

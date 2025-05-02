@@ -75,12 +75,12 @@ else:
 
 # Set up the Selenium WebDriver
 if os.name == 'posix':
-    # For macOS-arm64 with ChromeDriver (version 130)
-    driver_path = os.path.join('WebDriver', 'chromedriver-mac-arm64-v130', 'chromedriver')
+    # For macOS-arm64 with ChromeDriver (version 136.0.7103.49)
+    driver_path = os.path.join('WebDriver', 'chromedriver-mac-arm64-v136.0.7103.49', 'chromedriver')
     driver = webdriver.Chrome(service=ChromeService(driver_path))
 elif os.name == 'nt':
-    # For Windows-x64 with Microsoft Edge WebDriver (version 125)
-    driver_path = os.path.join('WebDriver', 'edgedriver_win64_v125', 'msedgedriver.exe')
+    # For Windows-x64 with Microsoft Edge WebDriver (version 134.0.3124.119)
+    driver_path = os.path.join('WebDriver', 'edgedriver_win64_v134.0.3124.119', 'msedgedriver.exe')
     driver = webdriver.Edge(service=EdgeService(driver_path))
 else:
     logging.error("Unsupported Operating System for WebDriver setup.")
