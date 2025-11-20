@@ -1,5 +1,12 @@
 ### Changelog
 
+- **v1.6.1** (2025-11-20)
+  - **Added**: New stable digital_signature() logic with automatic popup detection, safe fallbacks, and guaranteed return to main window.
+  - **Fixed**: Long-standing issue where Selenium remained stuck in "ShowInfo" popup, causing all subsequent employees to fail (NTUHWeb1_txbEmpNO not found).
+  - **Improved**: Added robust cleanup logic, universal popup closing, and fail-safe window switching.
+  - **Improved**: Greatly enhanced reliability on both macOS (M1) and Windows environments.
+  - **Changed**: Updated README with new logic documentation and versioning.
+
 - **v1.6.0** (2025-05-02)
   - **Added**: Updated autodigisign_utils.py to handle stale and missing elements in Document Object Model.
   - **Changed**: Deactivated the function for checking whether there is a dialog-form for delay-sign.

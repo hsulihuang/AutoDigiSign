@@ -251,104 +251,130 @@ def handle_delay_sign_dialog(driver):
 
 # Function to perform Digital Signature
 def digital_signature(EMPLOYEE_ID, EMPLOYEE_NAME, PINCODE, driver):
-    # Enter credentials
+    # Remember the main window at the very beginning
+    main_window = driver.current_window_handle
+
+    # 1. Enter employee ID
     EmployeeID = safe_find(driver, By.XPATH, '//*[@id="NTUHWeb1_txbEmpNO"]')
     EmployeeID.clear()
     EmployeeID = safe_find(driver, By.XPATH, '//*[@id="NTUHWeb1_txbEmpNO"]')
     EmployeeID.send_keys(EMPLOYEE_ID, Keys.ENTER)
     time.sleep(1)
 
+    # 2. Enter PIN
     EmployeePincode = safe_find(driver, By.XPATH, '//*[@id="NTUHWeb1_txbPinCode"]')
+    EmployeePincode.clear()
     EmployeePincode.send_keys(PINCODE)
     time.sleep(1)
 
-    # Submit the DigitalSignature form
+    # 3. Click the sign button
     sign_button = safe_find(driver, By.XPATH, '//*[@id="NTUHWeb1_btnDoSignatureByCrossBroswer"]')
     sign_button.click()
 
-    # Check whether there is a dialog-form for delay-sign
-    #handle_delay_sign_dialog(driver)  ## Deactivated. Not needed for now.
-
-    # Pause briefly to allow the pop-up to open
+    # 4. Wait briefly for popup to appear
     time.sleep(1)
 
-    # Get the window handles and the main window handle
-    window_handles = driver.window_handles
-    main_window = driver.current_window_handle
-
-    # Switch to the pop-up window
-    for handle in window_handles:
+    # 5. Find the popup window (if any)
+    popup_handle = None
+    for handle in driver.window_handles:
         if handle != main_window:
-            driver.switch_to.window(handle)
+            popup_handle = handle
             break
 
-    # Now, you are in the pop-up window
+    if not popup_handle:
+        logging.warning(f"No pop-up window detected for Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}")
+        return
+
+    driver.switch_to.window(popup_handle)
     logging.info(f"Switch to the pop-up window:, {driver.title}")
 
-    # Locate the message and print it
-        # Web Message #1: <div id="dsInfo">[CrossBrowser]查無待簽章電子病歷資料</div>
-        # Web Message #2: [CrossBrowser] 簽章完成, 共完成7筆簽章
-        # Web Message #3: 載入失敗，錯誤代碼:[61001] 一般性錯誤，ServiSign主程式-未安裝完成，請重新安裝試試看.
-        # Web Message #4: 初始化密碼模組失敗:9056
-        # Web Message #5: 批次電子簽章作業中，請勿於中途取出醫事人員卡，待簽章完成後再取出卡片。
-    message_element = safe_find(driver, By.XPATH, '//*[@id="dsInfo"]')
-    message_text = message_element.text
-
-    # Check whether there is any medical record to be sign
-    pattern_1 = '查無待簽章電子病歷資料'
-    pattern_2 = '簽章完成'
-    pattern_3 = 'ServiSign主程式-未安裝完成'
-    pattern_4 = '初始化密碼模組失敗'
-    pattern_5 = '批次電子簽章作業中'
-
-    # Initially set the flag to True
-    flag = True
-
-    # Check initial state based on the patterns
-    if re.search(pattern_1, message_text):
-        logging.info(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
-        flag = False  # No further action needed
-    elif re.search(pattern_2, message_text):
-        logging.info(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
-        flag = False  # No further action needed
-    elif re.search(pattern_3, message_text):
-        logging.error(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
-        flag = False  # Stop since ServiSign is not installed
-    elif re.search(pattern_4, message_text):
-        logging.error(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
-        flag = False  # Stop since ServiSign is not installed
-    elif re.search(pattern_5, message_text):
-        logging.info(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")  ### This line is not working for some reason. Suspect a diffent XPATH
-    else:
-        logging.warning(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
-        logging.warning('AutoDigiSign message: Warning: Exception #1')
-
-    # Continue checking while flag is True (Warning)
-    while flag:
+    try:
+        # Try to find the main message element (dsInfo)
         try:
-            # Pause for a few seconds to avoid excessive requests to the server
-            time.sleep(3)
+            message_element = safe_find(driver, By.XPATH, '//*[@id="dsInfo"]')
+            message_text = message_element.text
+        except Exception as e:
+            # This is exactly what happened in your log with title 'ShowInfo'
+            logging.error(
+                f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}: "
+                f"Failed to locate dsInfo element in popup: {e}"
+            )
+            # Fallback: log some info and exit gracefully
+            try:
+                logging.debug(f"Popup page source (truncated): {driver.page_source[:1000]}")
+            except Exception:
+                pass
+            return  # Exit the try-block; finally will still run and clean up
 
-            # Update the current message
-            new_message_text = safe_find(driver, By.XPATH, '//*[@id="dsInfo"]').text
+        # --- Original pattern checking logic ---
+        pattern_1 = '查無待簽章電子病歷資料'  # Web Message: <div id="dsInfo">[CrossBrowser]查無待簽章電子病歷資料</div>
+        pattern_2 = '簽章完成'  # Web Message: [CrossBrowser] 簽章完成, 共完成7筆簽章
+        pattern_3 = 'ServiSign主程式-未安裝完成'  # Web Message: 載入失敗，錯誤代碼:[61001] 一般性錯誤，ServiSign主程式-未安裝完成，請重新安裝試試看.
+        pattern_4 = '初始化密碼模組失敗'  # Web Message: 初始化密碼模組失敗:9056
+        pattern_5 = '批次電子簽章作業中'  # Web Message: 批次電子簽章作業中，請勿於中途取出醫事人員卡，待簽章完成後再取出卡片。
 
-            # Check for successful signing with regex
-            if re.search(pattern_2, new_message_text):
-                logging.info(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
-                flag = False  # Stop the loop once signing is complete
+        flag = True
 
-        except (StaleElementReferenceException, NoSuchElementException) as e:
-            # Handle specific exceptions that may occur during element retrieval
+        if re.search(pattern_1, message_text):
+            logging.info(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
+            flag = False
+        elif re.search(pattern_2, message_text):
+            logging.info(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
+            flag = False
+        elif re.search(pattern_3, message_text):
+            logging.error(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
+            flag = False
+        elif re.search(pattern_4, message_text):
+            logging.error(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
+            flag = False
+        elif re.search(pattern_5, message_text):
+            logging.info(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
+        else:
             logging.warning(f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, Web message: {message_text}")
-            logging.warning(f'AutoDigiSign message: Warning: Exception #2. Error: {e}')
+            logging.warning('AutoDigiSign message: Warning: Exception #1')
 
-    # Click the close button on the pop-up window
-    close_button = safe_find(driver, By.XPATH, '//*[@id="confirmBtn"]')
-    close_button.click()
+        # If we still need to wait for signing to complete, poll dsInfo
+        while flag:
+            try:
+                time.sleep(3)
+                new_message_text = safe_find(driver, By.XPATH, '//*[@id="dsInfo"]').text
 
-    # At this point, the pop-up window is closed
-    # Now switch back to the main window
-    driver.switch_to.window(main_window)
+                if re.search(pattern_2, new_message_text):
+                    logging.info(
+                        f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, "
+                        f"Web message: {new_message_text}"
+                    )
+                    flag = False
 
-    # Confirm you are back in the main window
-    logging.info(f"Back to the main window:, {driver.title}")
+            except (StaleElementReferenceException, NoSuchElementException) as e:
+                logging.warning(
+                    f"Employee ID: {EMPLOYEE_ID}, Name: {EMPLOYEE_NAME}, "
+                    f"AutoDigiSign message: Warning: Exception #2. Error: {e}"
+                )
+                # Break out to avoid infinite loop if the element disappears permanently
+                break
+
+    finally:
+        # 6. ALWAYS try to close popup and go back to main window,
+        #    even if any error occurred above.
+        try:
+            try:
+                # Preferred way: click confirm button if present
+                close_button = safe_find(driver, By.XPATH, '//*[@id="confirmBtn"]', retries=1, delay=0.5)
+                close_button.click()
+                time.sleep(0.5)
+            except Exception as e:
+                logging.warning(f"Could not click confirmBtn on popup: {e}. Trying to close popup window directly.")
+                try:
+                    driver.close()
+                except Exception as e2:
+                    logging.warning(f"Could not close popup window: {e2}")
+        except Exception as e:
+            logging.warning(f"Unexpected error when closing popup: {e}")
+
+        # Ensure we end up back in the main window (where txbEmpNO lives)
+        try:
+            driver.switch_to.window(main_window)
+            logging.info(f"Back to the main window:, {driver.title}")
+        except Exception as e:
+            logging.error(f"Failed to switch back to the main window after popup: {e}")
