@@ -1,16 +1,18 @@
 # -----------------------------------------------------------------------------
 # Project‑specific data, artifacts & secrets
 # -----------------------------------------------------------------------------
-inputs/
-outputs/
-storehouse/
-WebDriver/
+/inputs/
+/outputs/
+/webdrivers/
+
+# Legacy local data directory; keep ignored to avoid exposing old secrets.
+/storehouse/
 
 # Local notebooks & credentials (do **not** commit!)
-local_test.ipynb
 credentials.ini
 email_config.ini
 employee_ids.txt
+employee_list.txt
 .env
 *.env
 
@@ -37,21 +39,23 @@ __pycache__/
 # Packaging, build & installer artifacts
 # -----------------------------------------------------------------------------
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
+/build/
+/develop-eggs/
+/dist/
+/downloads/
+/eggs/
+/.eggs/
 *.egg
 *.egg-info/
-wheels/
-pip-wheel-metadata/
-lib/
-lib64/
-parts/
-var/
-sdist/
+/wheels/
+/wheelhouse/
+*.whl
+/pip-wheel-metadata/
+/lib/
+/lib64/
+/parts/
+/var/
+/sdist/
 .installed.cfg
 pip-log.txt
 pip-delete-this-directory.txt
@@ -72,6 +76,7 @@ htmlcov/
 # -----------------------------------------------------------------------------
 # Virtual environments (common names)
 # -----------------------------------------------------------------------------
+.venv/
 venv/
 ENV/
 env/

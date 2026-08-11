@@ -1,0 +1,1 @@
+"""AutoDigiSign application package."""

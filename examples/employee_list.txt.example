@@ -1,0 +1,12 @@
+# Temporary employees are active only in the listed month.
+[2026-08]
+012345 Y1測試員工
+142857 Y2測試員工
+
+[2026-09]
+142857 Y2測試員工
+114514 Y1測試員工
+
+# Permanent employees are active every month.
+[permanent]
+009487 永久測試員工

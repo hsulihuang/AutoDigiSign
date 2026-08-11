@@ -1,4 +1,7 @@
-opencv_python==4.10.0.84
+# AutoDigiSign requires Python 3.14.x.
+numpy==2.5.2
+opencv-python==4.14.0.94
+Pillow==12.3.0
 pytesseract==0.3.13
-requests==2.32.3
-selenium==4.25.0
+requests==2.34.2
+selenium==4.46.0

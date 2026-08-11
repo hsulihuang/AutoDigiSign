@@ -1,0 +1,20 @@
+* text=auto
+
+# Repository metadata and cross-platform text files use LF.
+.gitattributes text eol=lf
+.gitignore text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.ini text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.plist text eol=lf
+*.example text eol=lf
+*.sh text eol=lf
+*.command text eol=lf
+LICENSE text eol=lf
+
+# Windows batch and PowerShell scripts must keep CRLF in the working tree.
+*.bat text eol=crlf
+*.ps1 text eol=crlf
