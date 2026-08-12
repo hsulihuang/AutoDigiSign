@@ -83,18 +83,39 @@ class LoggingConfigTests(unittest.TestCase):
                 Path(first_info).read_text(encoding='utf-8'),
             )
 
-    def test_redacts_password_pin_and_session(self):
+    def test_redacts_sensitive_values_in_common_rendered_forms(self):
         text = (
-            'SESSION=abc123 password=secret pincode=9876 '
-            'sender_password=mail-secret'
+            'SESSION=abc123 session_token=session-secret '
+            'verification_value=verification-secret '
+            'password=secret pincode=9876 '
+            'sender_password=mail-secret '
+            "{'password': 'dict-secret', \"pincode\": \"654321\", "
+            "'verifyCode': 'ABC123'} "
+            "CredentialsSettings(password='object-secret', pincode='112233') "
+            'Authorization: Bearer header-secret Bearer standalone-secret '
+            "{'Authorization': 'Basic mapping-basic-secret', "
+            "\"Authorization\": \"Bearer mapping-bearer-secret\"} "
+            'harmless=visible notpassword=visible spin=visible '
+            'pinboard=visible pinwheel=visible'
         )
 
         redacted = SensitiveDataFilter.redact(text)
 
-        self.assertNotIn('abc123', redacted)
-        self.assertNotIn('secret', redacted)
-        self.assertNotIn('9876', redacted)
-        self.assertEqual(redacted.count('[REDACTED]'), 4)
+        self.assertEqual(
+            redacted,
+            'SESSION=[REDACTED] session_token=[REDACTED] '
+            'verification_value=[REDACTED] password=[REDACTED] '
+            'pincode=[REDACTED] sender_password=[REDACTED] '
+            "{'password': [REDACTED], \"pincode\": [REDACTED], "
+            "'verifyCode': [REDACTED]} "
+            'CredentialsSettings(password=[REDACTED], '
+            'pincode=[REDACTED]) Authorization: [REDACTED] '
+            "Bearer [REDACTED] {'Authorization': [REDACTED], "
+            '"Authorization": [REDACTED]} harmless=visible '
+            'notpassword=visible spin=visible pinboard=visible '
+            'pinwheel=visible',
+        )
+        self.assertEqual(SensitiveDataFilter.redact(redacted), redacted)
 
     def test_info_exception_is_single_line_while_debug_keeps_traceback(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -104,7 +125,7 @@ class LoggingConfigTests(unittest.TestCase):
             )
             try:
                 raise RuntimeError(
-                    'primary error message\n'
+                    "primary error message password='trace-secret'\n"
                     'Stacktrace:\n'
                     'driver frame details'
                 )
@@ -115,9 +136,12 @@ class LoggingConfigTests(unittest.TestCase):
             debug_text = Path(debug_log).read_text(encoding='utf-8')
 
             self.assertIn(
-                'Operation failed: RuntimeError: primary error message',
+                'Operation failed: RuntimeError: primary error message '
+                'password=[REDACTED]',
                 info_text,
             )
+            self.assertNotIn('trace-secret', info_text)
+            self.assertNotIn('trace-secret', debug_text)
             self.assertNotIn('Stacktrace:', info_text)
             self.assertNotIn('driver frame details', info_text)
             self.assertEqual(len(info_text.splitlines()), 1)

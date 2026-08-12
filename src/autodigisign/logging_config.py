@@ -8,6 +8,11 @@ AUTODIGISIGN_HANDLER_ATTRIBUTE = '_autodigisign_handler'
 LOG_TIMESTAMP_FORMAT = '%Y%m%dT%H%M%S'
 MAX_INFO_EXCEPTION_MESSAGE_CHARACTERS = 500
 
+_RENDERED_SECRET_VALUE = (
+    r"(?:\[REDACTED\]|'(?:\\.|[^'\\])*'|"
+    r"\"(?:\\.|[^\"\\])*\"|[^,;\s&}\])]+)"
+)
+
 
 def _create_empty_file_exclusively(file_path):
     descriptor = os.open(
@@ -53,19 +58,33 @@ def _reserve_log_filepaths(log_directory, timestamp):
 
 
 class SensitiveDataFilter(logging.Filter):
-    """Redact session-like secrets that should never be written to logs."""
+    """Redact credential, authorization, and session values from logs."""
 
     _patterns = (
         (
-            re.compile(r"(?i)(SESSION(?:=|\s+(?:ID\s*)?[:=]\s*))[^&\s'\"}]+"),
+            re.compile(
+                r"(?i)("
+                r"(?<!\w)['\"]?"
+                r"(?:sender_password|password|passwd|pincode|pin|"
+                r"verify(?:[\s_-]*code)|"
+                r"verification(?:[\s_-]*(?:code|value))?|"
+                r"session(?:[\s_-]*(?:id|token|key))?)"
+                r"['\"]?\s*[:=]\s*"
+                r")"
+                + _RENDERED_SECRET_VALUE
+            ),
             r"\1[REDACTED]",
         ),
-        (re.compile(r"(?i)(verifyCode=)[^&\s'\"}]+"), r"\1[REDACTED]"),
         (
             re.compile(
-                r"(?i)((?:password|passwd|pincode|pin|sender_password)\s*[:=]\s*)"
-                r"[^,;\s'\"}]+"
+                r"(?i)((?<!\w)['\"]?Authorization['\"]?\s*[:=]\s*)"
+                r"(?:(?:Bearer|Basic)\s+)?"
+                + _RENDERED_SECRET_VALUE
             ),
+            r"\1[REDACTED]",
+        ),
+        (
+            re.compile(r"(?i)(\bBearer\s+)" + _RENDERED_SECRET_VALUE),
             r"\1[REDACTED]",
         ),
     )
